@@ -1,989 +1,132 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Surprise For You</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    body {
-      background-color: #813d8a;
-      color: #ffffff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 480px;
-      padding: 20px;
-      text-align: center;
-      position: relative;
-    }
-
-    .screen {
-      display: none;
-      animation: fadeIn 0.5s ease-in-out;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Keypad Lock Screen */
-    .pin-display {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 20px 0 30px;
-    }
-
-    .dot {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #ffffff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-    }
-
-    .dot.filled {
-      background-color: #ff4d6d;
-      border-color: #ff4d6d;
-    }
-
-    .keypad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      max-width: 280px;
-      margin: 0 auto;
-    }
-
-    .key {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-      font-size: 20px;
-      cursor: pointer;
-      margin: 0 auto;
-      transition: 0.2s;
-    }
-
-    .key:active {
-      background: rgba(255, 255, 255, 0.4);
-    }
-
-    /* Modal Popups */
-    .modal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: 0.3s;
-      z-index: 100;
-    }
-
-    .modal.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-content {
-      background: #1b263b;
-      padding: 25px;
-      border-radius: 15px;
-      border: 1px solid #ff4d6d;
-      text-align: center;
-      max-width: 300px;
-      position: relative;
-    }
-
-    .btn {
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: #ff4d6d;
-      border: none;
-      color: white;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    /* Envelope Screen */
-    .envelope {
-      width: 200px;
-      height: 120px;
-      background: #1b263b;
-      margin: 40px auto;
-      position: relative;
-      border: 2px solid #ffffff;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    .envelope::after {
-      content: '💌';
-      font-size: 40px;
-      line-height: 120px;
-    }
-
-    /* Letter Screen */
-    .letter-card {
-      background: #1b263b;
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.2);
-      text-align: left;
-      font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 20px;
-    }
-
-    /* Menu Grid */
-    .menu-grid {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 30px;
-    }
-
-    .menu-card {
-      background: #1b263b;
-      padding: 20px;
-      border-radius: 12px;
-      font-size: 30px;
-      cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.2);
-      width: 80px;
-    }
-
-    .btn-back {
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid #fff;
-      color: #fff;
-      padding: 6px 20px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.2s;
-    }
-
-    .btn-back:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    /* Modal Cat Styling */
-    .wrong-content, .success-content {
-      position: relative;
-      margin-top: 50px;
-      overflow: visible !important;
-    }
-
-    .modal-cat {
-      position: absolute;
-      top: -75px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100px;
-      height: auto;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    /* CSS Kucing Kiri & Kanan di Layar Menu */
-    .cat-image-left, .cat-image-right {
-      position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 18vw;
-      max-width: 200px;
-      min-width: 100px;
-      height: auto;
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    .cat-image-left { left: 2vw; }
-    .cat-image-right { right: 2vw; }
-
-    /* ================================================= */
-    /* CSS KHUSUS DESAIN SCRAPBOOK OUR MEMORIES          */
-    /* ================================================= */
-    .memories-wrapper {
-      background-color: #0d1b2a;
-      background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 6px);
-      padding: 25px 15px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      position: relative;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-
-    .memories-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-    }
-
-    .memories-title {
-      font-family: 'Georgia', serif;
-      font-style: italic;
-      font-size: 28px;
-      color: #ffffff;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
-      text-align: left;
-    }
-
-    .memories-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      position: relative;
-    }
-
-    .scrapbook-col {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    /* Style Bingkai Polaroid */
-    .polaroid-frame {
-      background: #ffffff;
-      padding: 8px 8px 25px 8px;
-      box-shadow: 3px 5px 15px rgba(0,0,0,0.4);
-      border-radius: 2px;
-      position: relative;
-      transition: transform 0.3s ease;
-    }
-
-    .polaroid-frame img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-      display: block;
-      border-radius: 2px;
-    }
-
-    /* Efek Gerigi / Stamps Edge */
-    .stamp-edge {
-      border: 2px dashed #ffffff;
-      outline: 4px solid #ffffff;
-    }
-
-    /* Rotasi & Posisi Foto Asimetris */
-    .rotate-left-1 { transform: rotate(-5deg); }
-    .rotate-right-1 { transform: rotate(4deg); }
-    .rotate-left-2 { transform: rotate(-3deg); }
-    .rotate-right-2 { transform: rotate(6deg); }
-
-    .polaroid-frame:hover {
-      transform: scale(1.05) rotate(0deg);
-      z-index: 10;
-    }
-
-    /* Teks Catatan / Quote */
-    .memories-quote {
-      font-size: 11px;
-      line-height: 1.5;
-      color: #e0e1dd;
-      text-align: left;
-      font-style: italic;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 12px;
-      border-radius: 8px;
-      border-left: 3px solid #ff4d6d;
-      margin-top: 10px;
-    }
-
-    /* Efek Selotip & Stiker Stempel */
-    .tape-sticker {
-      position: absolute;
-      top: -10px;
-      left: 30%;
-      width: 50px;
-      height: 15px;
-      background: rgba(255, 255, 255, 0.5);
-      transform: rotate(-3deg);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-
-    .flower-sticker {
-      position: absolute;
-      top: -15px;
-      left: -10px;
-      font-size: 24px;
-      z-index: 5;
-    }
-
-    .bow-sticker {
-      position: absolute;
-      bottom: -10px;
-      right: -10px;
-      font-size: 22px;
-      z-index: 5;
-    }
-
-    .camera-sticker {
-      position: absolute;
-      top: -15px;
-      right: 10px;
-      font-size: 26px;
-      z-index: 5;
-    }
-
-    /* ================================================= */
-    /* CSS BARU UNTUK LAYOUT SCREEN-FLOWERS             */
-    /* ================================================= */
-    #screen-flowers {
-      overflow-y: auto;
-      max-height: 80vh;
-      padding-bottom: 20px;
-    }
-
-    #screen-flowers .flowers-layout {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      gap: 15px;
-      text-align: left;
-      position: relative;
-    }
-
-    #screen-flowers .left-column {
-      flex: 1;
-    }
-
-    #screen-flowers .right-column {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-    }
-
-    #screen-flowers .flowers-title-wrapper {
-      margin-bottom: 20px;
-    }
-
-    #screen-flowers .page-title-base {
-      font-size: 1.8em;
-      color: #ffffff;
-      text-transform: capitalize;
-    }
-
-    #screen-flowers .page-title-script {
-      font-family: 'Georgia', serif;
-      font-style: italic;
-      font-size: 1.6em;
-      color: #ffffff;
-      text-transform: capitalize;
-      margin-top: -10px;
-      display: block;
-    }
-
-    #screen-flowers .flowers-text {
-      color: #ffffff;
-      font-size: 0.9em;
-      line-height: 1.6;
-    }
-
-    #screen-flowers .back-button-container {
-      position: absolute;
-      top: 0;
-      right: 0;
-    }
-
-    #screen-flowers .bouquet-image {
-      max-width: 100%;
-      height: auto;
-    }
-
-    #screen-flowers .sparkle-sticker {
-      position: absolute;
-      bottom: -10px;
-      right: -10px;
-      font-size: 2.5em;
-      z-index: 5;
-    }
-
-    /* ================================================= */
-    /* CSS BARU UNTUK LAYOUT PLAYLIST FOR YOU           */
-    /* ================================================= */
-    #screen-playlist {
-      position: relative;
-    }
-
-    .playlist-header-bar {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 10px;
-    }
-
-    .player-card {
-      background: rgba(13, 27, 42, 0.85);
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      border-radius: 20px;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: relative;
-      margin-bottom: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    }
-
-    .player-info {
-      text-align: left;
-      flex: 1;
-    }
-
-    .player-title {
-      font-size: 26px;
-      font-weight: bold;
-      color: #ffffff;
-    }
-
-    .player-artist {
-      font-size: 13px;
-      color: #d0d0d0;
-      margin-bottom: 8px;
-    }
-
-    .progress-bar-container {
-      width: 80%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 2px;
-      position: relative;
-      margin-bottom: 10px;
-    }
-
-    .progress-fill {
-      width: 35%;
-      height: 100%;
-      background: #ffffff;
-      border-radius: 2px;
-    }
-
-    .progress-dot {
-      width: 8px;
-      height: 8px;
-      background: #ffffff;
-      border-radius: 50%;
-      position: absolute;
-      top: -2px;
-      left: 35%;
-    }
-
-    .player-controls-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-    }
-
-    .player-album-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .album-cover-stamp {
-      width: 85px;
-      height: 85px;
-      background: #fff;
-      padding: 4px;
-      border-radius: 4px;
-      border: 2px dashed #ffffff;
-      outline: 2px solid #ffffff;
-      z-index: 2;
-      box-shadow: 2px 4px 10px rgba(0,0,0,0.3);
-    }
-
-    .album-cover-stamp img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 2px;
-    }
-
-    .vinyl-disc {
-      width: 75px;
-      height: 75px;
-      background: radial-gradient(circle, #111 30%, #333 31%, #111 35%, #222 60%, #000 100%);
-      border-radius: 50%;
-      margin-left: -35px;
-      z-index: 1;
-      border: 2px solid #555;
-      animation: spinVinyl 8s linear infinite;
-    }
-
-    @keyframes spinVinyl {
-      100% { transform: rotate(360deg); }
-    }
-
-    .headphone-icon-sticker {
-      position: absolute;
-      top: -20px;
-      left: -15px;
-      font-size: 32px;
-      z-index: 10;
-    }
-
-    .music-notes-sticker {
-      position: absolute;
-      top: -15px;
-      right: 30px;
-      font-size: 24px;
-    }
-
-    .playlist-section-box {
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      border-radius: 20px;
-      padding: 20px 10px 15px 10px;
-      position: relative;
-      background: rgba(13, 27, 42, 0.4);
-    }
-
-    .playlist-title-header {
-      position: absolute;
-      top: -20px;
-      left: 20px;
-      background: #813d8a;
-      padding: 0 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .playlist-title-script {
-      font-family: 'Georgia', serif;
-      font-style: italic;
-      font-size: 26px;
-    }
-
-    .playlist-title-regular {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .playlist-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .song-card {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      text-align: left;
-    }
-
-    .song-card img {
-      width: 42px;
-      height: 42px;
-      border-radius: 4px;
-      object-fit: cover;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-    }
-
-    .song-card-info h4 {
-      font-size: 11px;
-      font-weight: bold;
-      line-height: 1.2;
-    }
-
-    .song-card-info p {
-      font-size: 9px;
-      color: #ccc;
-    }
-
-    .song-divider {
-      width: 1px;
-      height: 30px;
-      background: rgba(255, 255, 255, 0.3);
-      position: relative;
-      align-self: center;
-    }
-
-    .song-divider::before, .song-divider::after {
-      content: '✦';
-      font-size: 8px;
-      position: absolute;
-      left: -3px;
-      color: #fff;
-    }
-
-    .song-divider::before { top: -8px; }
-    .song-divider::after { bottom: -8px; }
-
-    .mp3-sticker {
-      position: absolute;
-      top: -15px;
-      right: 50px;
-      font-size: 24px;
-    }
-
-    .big-clef-sticker {
-      position: absolute;
-      top: -30px;
-      right: -10px;
-      font-size: 40px;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    
-    <!-- Screen PIN -->
-    <div id="screen-pin" class="screen active">
-      <h2>Enter a password</h2>
-      <div class="pin-display">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-
-      <div class="keypad">
-        <button class="key" onclick="pressKey('1')">1</button>
-        <button class="key" onclick="pressKey('2')">2</button>
-        <button class="key" onclick="pressKey('3')">3</button>
-        <button class="key" onclick="pressKey('4')">4</button>
-        <button class="key" onclick="pressKey('5')">5</button>
-        <button class="key" onclick="pressKey('6')">6</button>
-        <button class="key" onclick="pressKey('7')">7</button>
-        <button class="key" onclick="pressKey('8')">8</button>
-        <button class="key" onclick="pressKey('9')">9</button>
-        <button class="key" onclick="pressKey('*')">*</button>
-        <button class="key" onclick="pressKey('0')">0</button>
-        <button class="key" onclick="pressKey('#')">#</button>
-      </div>
-    </div>
-
-    <!-- Screen Envelope -->
-    <div id="screen-envelope" class="screen">
-      <div class="envelope" onclick="openEnvelope()"></div>
-      <p>Klik amplop untuk membuka</p>
-    </div>
-
-    <!-- Screen Letter -->
-    <div id="screen-letter" class="screen">
-      <div class="letter-card">
-        <h3>For You, Si Cantik & Centil Whinnaa💜</h3>
-        <br>
-        <p id="letter-text"></p>
-      </div>
-      <button class="btn" onclick="nextLetterPage()">Lanjut</button>
-    </div>
-
-    <!-- Screen Menu Utama -->
-    <div id="screen-menu" class="screen">
-      <h2>There's still more</h2>
-      <p style="font-size: 12px; color: #aaa; margin-top: 5px;">Waiting for you</p>
-      
-      <img src="./gambar-untuk-web-whinna/cat-ngintip-dari-kiri.png" alt="Cat Left" class="cat-image-left">
-      <img src="./gambar-untuk-web-whinna/cat-ngintip-dari-kanan.png" alt="Cat Right" class="cat-image-right">
-
-      <div class="menu-grid">
-        <div class="menu-card" onclick="showSubScreen('memories')">🩵</div>
-        <div class="menu-card" onclick="showSubScreen('flowers')">💐</div>
-        <div class="menu-card" onclick="showSubScreen('playlist')">🎵</div>
-      </div>
-    </div>
-
-    <!-- Screen Our Memories -->
-    <div id="screen-memories" class="screen">
-      <div class="memories-wrapper">
-        <div class="memories-header">
-          <h2 class="memories-title">Our Memories</h2>
-          <button class="btn-back" onclick="showSubScreen('menu')">Back ♡</button>
-        </div>
-
-        <div class="memories-grid">
-          <!-- Kolom Kiri -->
-          <div class="scrapbook-col">
-            <div class="polaroid-frame rotate-left-1 stamp-edge">
-              <span class="flower-sticker">🌸</span>
-              <img src="./gambar-untuk-web-whinna/foto-1.jpg" alt="Memory 1">
-            </div>
-
-            <div class="polaroid-frame rotate-right-1">
-              <div class="tape-sticker"></div>
-              <img src="./gambar-untuk-web-whinna/foto-2.jpg" alt="Memory 2">
-              <span class="bow-sticker">🎀</span>
-            </div>
-
-            <div class="polaroid-frame rotate-left-2">
-              <img src="./gambar-untuk-web-whinna/foto-3.jpg" alt="Memory 3">
-            </div>
-          </div>
-
-          <!-- Kolom Kanan -->
-          <div class="scrapbook-col">
-            <div class="polaroid-frame rotate-right-2">
-              <span class="camera-sticker">📷</span>
-              <img src="./gambar-untuk-web-whinna/foto-4.jpg" alt="Memory 4">
-            </div>
-
-            <p class="memories-quote">
-              "Every photo tells a story, every smile holds a memory, and every moment reminds me how lucky I am to have you. These may just be pictures, but to me, they're little pieces of happiness that I'll always treasure."
-            </p>
-
-            <div class="polaroid-frame rotate-right-1">
-              <div class="tape-sticker"></div>
-              <img src="./gambar-untuk-web-whinna/foto-5.jpg" alt="Memory 5">
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Screen Flowers -->
-    <div id="screen-flowers" class="screen">
-      <div class="back-button-container">
-        <button class="btn-back" onclick="showSubScreen('menu')">Back ♡</button>
-      </div>
-
-      <div class="flowers-layout">
-        <!-- Kolom Kiri (Teks) -->
-        <div class="left-column">
-          <div class="flowers-title-wrapper">
-            <h1 class="page-title-base">Flowers For</h1>
-            <span class="page-title-script">My favorite person</span>
-          </div>
-
-          <p class="flowers-text">
-            Because you deserve every beautiful thing this world has to offer. Thank you for being someone so kind, so caring, and so incredibly strong, even on the days when no one notices how hard you're trying. I hope these flowers remind you that you're deeply appreciated, endlessly loved, and that I'm always proud of the person you are becoming. Never let anyone, including yourself, make you believe you're anything less than amazing.
-          </p>
-        </div>
-
-        <!-- Kolom Kanan (gambar Bouquet) -->
-        <div class="right-column">
-          <img src="./gambar-untuk-web-whinna/purple-flowers.png" alt="Bouquet" class="bouquet-image">
-          <span class="sparkle-sticker">✨</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Screen Playlist (DIPERBARUI SESUAI FOTO SURAT) -->
-    <div id="screen-playlist" class="screen">
-      <div class="playlist-header-bar">
-        <button class="btn-back" onclick="showSubScreen('menu')">Back ♡</button>
-      </div>
-
-      <!-- Pemutar Musik Utama -->
-      <div class="player-card">
-        <span class="headphone-icon-sticker">🎧</span>
-        <span class="music-notes-sticker">🎶</span>
-
-        <div class="player-info">
-          <div class="player-title">Kamu</div>
-          <div class="player-artist">Cowboy Junior</div>
-
-          <div class="progress-bar-container">
-            <div class="progress-fill"></div>
-            <div class="progress-dot"></div>
-          </div>
-
-          <div class="player-controls-row">
-            <span>🔄</span>
-            <span>⏮</span>
-            <span>⏸</span>
-            <span>⏭</span>
-            <span>♡</span>
-          </div>
-        </div>
-
-        <div class="player-album-wrapper">
-          <div class="album-cover-stamp">
-            <img src="./gambar-untuk-web-whinna/kamu.jpg" alt="Kamu Album">
-          </div>
-          <div class="vinyl-disc"></div>
-        </div>
-      </div>
-
-      <!-- Playlist Items Box -->
-      <div class="playlist-section-box">
-        <div class="playlist-title-header">
-          <span class="playlist-title-script">Playlist</span>
-          <span class="playlist-title-regular">For You</span>
-        </div>
-
-        <span class="mp3-sticker">📟</span>
-        <span class="big-clef-sticker">🎼</span>
-
-        <div class="playlist-grid">
-          <!-- Song 1 -->
-          <div class="song-card">
-            <img src="./gambar-untuk-web-whinna/risk-it-all.jpg" alt="Risk It All">
-            <div class="song-card-info">
-              <h4>Risk It All</h4>
-              <p>Bruno Mars</p>
-            </div>
-          </div>
-
-          <div class="song-divider"></div>
-
-          <!-- Song 2 -->
-          <div class="song-card">
-            <img src="./gambar-untuk-web-whinna/stuck-on-you.jpg" alt="Stuck On You">
-            <div class="song-card-info">
-              <h4>Stuck On You</h4>
-              <p>Lionel Richie</p>
-            </div>
-          </div>
-
-          <div class="song-divider"></div>
-
-          <!-- Song 3 -->
-          <div class="song-card">
-            <img src="./gambar-untuk-web-whinna/mmg.jpg" alt="MMG">
-            <div class="song-card-info">
-              <h4>MMG</h4>
-              <p>Naykilla</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Modals -->
-  <div id="modal-wrong" class="modal">
-    <div class="modal-content wrong-content">
-      <img src="./gambar-untuk-web-whinna/peach-cat.png" alt="Wrong Password" class="modal-cat">
-      <h3>Wrong Password!</h3>
-      <p style="font-size: 12px; margin-top: 10px;">Clue: Tanggal & Bulan Ulangtahun Kamu.</p>
-      <button class="btn" onclick="closeModal('modal-wrong')">Try Again</button>
-    </div>
-  </div>
-
-  <div id="modal-success" class="modal">
-    <div class="modal-content success-content">
-      <img src="./gambar-untuk-web-whinna/happy-cat-fix.png" alt="Success" class="modal-cat">
-      <h3>Yay! 🎉</h3>
-      <p style="font-size: 13px; margin-top: 10px;">You found the right key to my heart &gt;&lt;</p>
-      <button class="btn" onclick="goToEnvelope()">Open Surprise</button>
-    </div>
-  </div>
-
-  <script>
-    const CORRECT_PIN = "0709";
-    let currentPin = "";
-
-    const letterPages = [
-      "There's something I've been waiting to tell you for a while. Mungkin ini cuma surat sederhana, tapi every single word comes straight from my heart.\n\nSo... will you read it until the end?",
-      "Thank you for being someone who has brought so much warmth into my life. Entah kamu sadar atau tidak, keberadaanmu selalu berhasil membuat hari-hariku terasa lebih indah.",
-      "Meeting you is one of the best things that has ever happened to me. I hope life always gives you reasons to smile. Thank you for being you."
-    ];
-    let currentLetterIdx = 0;
-
-    function pressKey(num) {
-      if (currentPin.length < 4) {
-        currentPin += num;
-        updateDots();
-      }
-
-      if (currentPin.length === 4) {
-        setTimeout(checkPin, 300);
-      }
-    }
-
-    function updateDots() {
-      const dots = document.querySelectorAll('.dot');
-      dots.forEach((dot, idx) => {
-        if (idx < currentPin.length) {
-          dot.classList.add('filled');
-          dot.innerText = '♥';
-        } else {
-          dot.classList.remove('filled');
-          dot.innerText = '';
-        }
-      });
-    }
-
-    function checkPin() {
-      if (currentPin === CORRECT_PIN) {
-        document.getElementById('modal-success').classList.add('show');
-      } else {
-        document.getElementById('modal-wrong').classList.add('show');
-      }
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('show');
-      currentPin = "";
+document.addEventListener('DOMContentLoaded', () => {
+  const CORRECT_PIN = "0709";
+  let currentPin = "";
+
+  const letterPages = [
+    "There's something I've been waiting to tell you for a while. Mungkin ini cuma surat sederhana, tapi every single word comes straight from my heart.\n\nSo... will you read it until the end?",
+    "Thank you for being someone who has brought so much warmth into my life. Entah kamu sadar atau tidak, keberadaanmu selalu berhasil membuat hari-hariku terasa lebih indah.",
+    "Meeting you is one of the best things that has ever happened to me. I hope life always gives you reasons to smile. Thank you for being you."
+  ];
+  let currentLetterIdx = 0;
+
+  // --- Fungsi Utama ---
+  function pressKey(num) {
+    if (currentPin.length < 4) {
+      currentPin += num;
       updateDots();
     }
 
-    function switchScreen(fromId, toId) {
-      document.getElementById(fromId).classList.remove('active');
-      document.getElementById(toId).classList.add('active');
+    if (currentPin.length === 4) {
+      setTimeout(checkPin, 300);
     }
+  }
 
-    function goToEnvelope() {
-      closeModal('modal-success');
-      switchScreen('screen-pin', 'screen-envelope');
-    }
-
-    function openEnvelope() {
-      switchScreen('screen-envelope', 'screen-letter');
-      showLetter();
-    }
-
-    function showLetter() {
-      document.getElementById('letter-text').innerText = letterPages[currentLetterIdx];
-    }
-
-    function nextLetterPage() {
-      currentLetterIdx++;
-      if (currentLetterIdx < letterPages.length) {
-        showLetter();
+  function updateDots() {
+    const dots = document.querySelectorAll('.dot');
+    dots.forEach((dot, idx) => {
+      if (idx < currentPin.length) {
+        dot.classList.add('filled');
+        dot.innerText = '♥';
       } else {
-        switchScreen('screen-letter', 'screen-menu');
+        dot.classList.remove('filled');
+        dot.innerText = '';
       }
-    }
+    });
+  }
 
-    function showSubScreen(screenName) {
-      const screens = ['menu', 'memories', 'flowers', 'playlist'];
-      screens.forEach(s => {
-        document.getElementById(`screen-${s}`).classList.remove('active');
-      });
-      document.getElementById(`screen-${screenName}`).classList.add('active');
+  function checkPin() {
+    if (currentPin === CORRECT_PIN) {
+      document.getElementById('modal-success').classList.add('show');
+    } else {
+      document.getElementById('modal-wrong').classList.add('show');
     }
-  </script>
-</body>
-</html>
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+    currentPin = "";
+    updateDots();
+  }
+
+  function switchScreen(fromId, toId) {
+    document.getElementById(fromId).classList.remove('active');
+    document.getElementById(toId).classList.add('active');
+  }
+
+  function goToEnvelope() {
+    closeModal('modal-success');
+    switchScreen('screen-pin', 'screen-envelope');
+  }
+
+  function openEnvelope() {
+    switchScreen('screen-envelope', 'screen-letter');
+    showLetter();
+  }
+
+  function showLetter() {
+    document.getElementById('letter-text').innerText = letterPages[currentLetterIdx];
+  }
+
+  function nextLetterPage() {
+    currentLetterIdx++;
+    if (currentLetterIdx < letterPages.length) {
+      showLetter();
+    } else {
+      switchScreen('screen-letter', 'screen-menu');
+    }
+  }
+
+  function showSubScreen(screenName) {
+    const screens = ['menu', 'memories', 'flowers', 'playlist'];
+    screens.forEach(s => {
+      document.getElementById(`screen-${s}`).classList.remove('active');
+    });
+    document.getElementById(`screen-${screenName}`).classList.add('active');
+  }
+
+  // --- Event Listeners ---
+  
+  // Tombol Keypad
+  document.querySelectorAll('.keypad .key').forEach(key => {
+    key.addEventListener('click', () => {
+      const keyValue = key.getAttribute('data-key');
+      pressKey(keyValue);
+    });
+  });
+
+  // Modal Try Again
+  document.getElementById('btn-try-again').addEventListener('click', () => {
+    closeModal('modal-wrong');
+  });
+
+  // Modal Success / Open Surprise
+  document.getElementById('btn-open-surprise').addEventListener('click', () => {
+    goToEnvelope();
+  });
+
+  // Buka Envelope
+  document.getElementById('envelope-btn').addEventListener('click', () => {
+    openEnvelope();
+  });
+
+  // Next Letter Page
+  document.getElementById('btn-next-letter').addEventListener('click', () => {
+    nextLetterPage();
+  });
+
+  // Menu Navigation Cards
+  document.querySelectorAll('.menu-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const targetSubScreen = card.getAttribute('data-subscreen');
+      showSubScreen(targetSubScreen);
+    });
+  });
+
+  // Back Buttons
+  document.querySelectorAll('.btn-back').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetSubScreen = btn.getAttribute('data-back');
+      showSubScreen(targetSubScreen);
+    });
+  });
+});
